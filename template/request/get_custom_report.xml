@@ -1,0 +1,22 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cb5="http://creditinfo.com/CB5"
+    xmlns:cus="http://creditinfo.com/CB5/v5.109/CustomReport"
+    xmlns:arr="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+    <soapenv:Header />
+    <soapenv:Body>
+        <cb5:GetCustomReport>
+            <cb5:parameters>
+                <cus:Consent>{consent}</cus:Consent>
+                <cus:IDNumber>{idNumber}</cus:IDNumber>
+                <cus:IDNumberType>{idNumberType}</cus:IDNumberType>
+                <cus:InquiryReason>{inquiryReason}</cus:InquiryReason>
+                <cus:ReferenceCode>0</cus:ReferenceCode>
+                <cus:ReportDate>{reportDate}</cus:ReportDate>
+                <cus:Sections>
+                    <arr:string>{sections}</arr:string>
+                </cus:Sections>
+                <cus:SubjectType>{subjectType}</cus:SubjectType>
+            </cb5:parameters>
+        </cb5:GetCustomReport>
+    </soapenv:Body>
+</soapenv:Envelope>

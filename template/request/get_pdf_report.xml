@@ -1,0 +1,19 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cb5="http://creditinfo.com/CB5"
+    xmlns:cus="http://creditinfo.com/CB5/v5.109/CustomReport">
+    <soapenv:Header />
+    <soapenv:Body>
+        <cb5:GetPdfReport>
+            <cb5:parameters>
+                <cus:Consent>{consent}</cus:Consent>
+                <cus:IDNumber>{idNumber}</cus:IDNumber>
+                <cus:IDNumberType>{idNumberType}</cus:IDNumberType>
+                <cus:InquiryReason>{inquiryReason}</cus:InquiryReason>
+                <cus:LanguageCode>{languageCode}</cus:LanguageCode>
+                <cus:ReferenceCode>0</cus:ReferenceCode>
+                <cus:ReportName>{reportName}</cus:ReportName>
+                <cus:SubjectType>{subjectType}</cus:SubjectType>
+            </cb5:parameters>
+        </cb5:GetPdfReport>
+    </soapenv:Body>
+</soapenv:Envelope>

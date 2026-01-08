@@ -1,0 +1,22 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cb5="http://creditinfo.com/CB5" xmlns:smar="http://creditinfo.com/CB5/v5.109/SmartSearch">
+    <soapenv:Header />
+    <soapenv:Body>
+        <cb5:SmartSearchIndividual>
+            <cb5:query>
+                <smar:InquiryReason>{inquiryReason}</smar:InquiryReason>
+                <smar:Parameters>
+                    <smar:DateOfBirth>{dob}</smar:DateOfBirth>
+                    <smar:FullName>{fullName}</smar:FullName>
+                    <smar:IdNumbers>
+                        <smar:IdNumberPairIndividual>
+                            <smar:IdNumber>{idNumber}</smar:IdNumber>
+                            <smar:IdNumberType>{idNumberType}</smar:IdNumberType>
+                        </smar:IdNumberPairIndividual>
+                    </smar:IdNumbers>
+                </smar:Parameters>
+                <smar:ReferenceCode>0</smar:ReferenceCode>
+            </cb5:query>
+        </cb5:SmartSearchIndividual>
+    </soapenv:Body>
+</soapenv:Envelope>

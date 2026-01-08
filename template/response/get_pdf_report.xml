@@ -1,0 +1,7 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <GetPdfReportResponse xmlns="http://creditinfo.com/CB5">
+            <GetPdfReportResult>{string_base64}</GetPdfReportResult>
+        </GetPdfReportResponse>
+    </s:Body>
+</s:Envelope>

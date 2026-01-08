@@ -1,0 +1,23 @@
+# .dockerignore
+.git
+.gitignore
+.env
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+env/
+venv/
+
+logs/
+data/dynamic/
+
+htmlcov/
+test/
+tests/
+
+Dockerfile
+docker-compose.yml
+README.MD

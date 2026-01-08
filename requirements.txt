@@ -1,0 +1,6 @@
+fastapi[standard]==0.128.0
+gunicorn==23.0.0
+lxml==6.0.2
+python-dotenv==1.2.1
+apscheduler==3.11.1
+git+https://github.com/asepscareer/middleware-kit-hana.git
