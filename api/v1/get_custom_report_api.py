@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # DESTINATION_DOMAIN = settings.destination_domain
 DESTINATION_DOMAIN = "http://172.16.90.223:9080/get-custom-report"
 
-@GetCustomReportRouter.post("/v1/get-custom-report", description="Get Custom Report endpoint", responses={200: {"content": {"text/xml": {}}}}, tags=["Pefindo"])
+@GetCustomReportRouter.post("/get-custom-report", description="Get Custom Report endpoint", responses={200: {"content": {"text/xml": {}}}}, tags=["Pefindo"])
 async def custom_report(raw_body: str = Body(..., media_type="text/xml"), forward_headers: dict = Depends(utils.get_clean_headers)):
     try:
         logger.info(f"Received request for /get-custom-report: {raw_body}")

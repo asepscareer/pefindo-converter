@@ -15,10 +15,10 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Pefindo Converter API",debug=settings.debug,lifespan=lifespan,)
 
     app.add_middleware(ObservabilityMiddleware)
-    app.include_router(SmartSearchIndvRouter,prefix="/pefindo",tags=["Pefindo"])
-    app.include_router(GetCustomReportRouter,prefix="/pefindo",tags=["Pefindo"])
-    app.include_router(GetPdfReportRouter,prefix="/pefindo",tags=["Pefindo"])
-    app.include_router(GetOtherReportRouter,prefix="/pefindo",tags=["Pefindo"])
+    app.include_router(SmartSearchIndvRouter,prefix="/v1/pefindo",tags=["Pefindo"])
+    app.include_router(GetCustomReportRouter,prefix="/v1/pefindo",tags=["Pefindo"])
+    app.include_router(GetPdfReportRouter,prefix="/v1/pefindo",tags=["Pefindo"])
+    app.include_router(GetOtherReportRouter,prefix="/v1/pefindo",tags=["Pefindo"])
     return app
 
 

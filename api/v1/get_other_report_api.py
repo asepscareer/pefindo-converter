@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # DESTINATION_DOMAIN = settings.destination_domain
 DESTINATION_DOMAIN = "http://172.16.90.223:9080/get-other-report"
 
-@GetOtherReportRouter.post("/v1/get-other-report", description="Get Other Report endpoint", responses={200: {"content": {"text/xml": {}}}})
+@GetOtherReportRouter.post("/get-other-report", description="Get Other Report endpoint", responses={200: {"content": {"text/xml": {}}}})
 async def get_other_report(raw_body: str = Body(..., media_type="text/xml"), forward_headers: dict = Depends(utils.get_clean_headers)):
     try:
         logger.info(f"Received request for /get-other-report: {raw_body}")

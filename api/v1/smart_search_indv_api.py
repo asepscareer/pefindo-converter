@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # DESTINATION_DOMAIN = settings.destination_domain
 DESTINATION_DOMAIN = "http://172.16.90.223:9080/smart-search-individual"
 
-@SmartSearchIndvRouter.post("/v1/smart-search-individual", description="Smart Search Individual endpoint", responses={200: {"content": {"text/xml": {}}}})
+@SmartSearchIndvRouter.post("/smart-search-individual", description="Smart Search Individual endpoint", responses={200: {"content": {"text/xml": {}}}})
 async def smart_search_individual(raw_body: str = Body(..., media_type="text/xml"), forward_headers: dict = Depends(utils.get_clean_headers)):
     try:
         logger.info(f"Received request for /smart-search-individual: {raw_body}")

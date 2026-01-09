@@ -17,17 +17,13 @@ async def lifespan(app):
     resources.scheduler.start()
     logger.info("🕒 Scheduler started (cleaner @ 01:00 daily)")
 
-    logger.info("✅ Service Ready (Pool, HTTP Client, Scheduler Active)")
+    logger.info("✅ Service Ready (HTTP Client, Scheduler Active)")
     yield
 
     logger.info("🛑 Cleaning up resources...")
     if resources.scheduler:
         resources.scheduler.shutdown()
         logger.info("🛑 Scheduler stopped")
-
-    if resources.process_pool:
-        resources.process_pool.shutdown(wait=True)
-        logger.info("🛑 Process pool closed")
 
     if resources.http_client:
         await resources.http_client.aclose()
