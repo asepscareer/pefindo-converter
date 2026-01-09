@@ -10,7 +10,6 @@ GetCustomReportRouter = APIRouter()
 
 logger = logging.getLogger(__name__)
 
-logger.info(f"DESTINATION_DOMAIN for Get Custom Report: {settings.destination_domain}")
 # DESTINATION_DOMAIN = settings.destination_domain
 DESTINATION_DOMAIN = "http://172.16.90.223:9080/get-custom-report"
 
