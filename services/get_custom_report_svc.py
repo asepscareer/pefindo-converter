@@ -1,25 +1,15 @@
-from fastapi import Request
-from lxml import etree as ET
 import logging
-from helper import smart_search_data
-from .refcode import generate_reference_code
+from lxml import etree as ET
+
+from utils import generate_reference_code
 
 
 logger = logging.getLogger(__name__)
 
-parser = ET.XMLParser(remove_blank_text=True, recover=True)
+class GetCustomReportSvc:
 
-def get_clean_headers(request: Request) -> dict:
-    headers = dict(request.headers)
-    blocked_keys = ["host", "connection", "server", "content-length"]
-    
-    for key in blocked_keys:
-        if key in headers:
-            del headers[key]
-            
-    return headers
-
-def custom_report_parser_response(xml_bytes: bytes) -> bytes:
+    @staticmethod
+    def custom_report_parser_response(xml_bytes: bytes) -> bytes:
         ns = {
             's': 'http://schemas.xmlsoap.org/soap/envelope/',
             'a': 'http://creditinfo.com/CB5/v5.109/CustomReport',
@@ -27,6 +17,7 @@ def custom_report_parser_response(xml_bytes: bytes) -> bytes:
         }
 
         try:
+            parser = ET.XMLParser(remove_blank_text=True, recover=True)
             root = ET.fromstring(xml_bytes, parser)
 
             # Akses Current Relations
@@ -139,120 +130,23 @@ def custom_report_parser_response(xml_bytes: bytes) -> bytes:
         except Exception as e:
             return "ERROR"
 
-def custom_report_parser_request(xml_data: str) -> str:
-    try:
-        root = ET.fromstring(xml_data.encode('utf-8'))
-        
-        query = root.find('.//cb5:GetCustomReport', namespaces=root.nsmap)
-        if query is not None: 
-            params = root.find('.//cb5:parameters', namespaces=query.nsmap)
-            if params is not None:
-                inquiry_reason = root.find('.//cus:InquiryReason', namespaces=params.nsmap)
-                if inquiry_reason is not None:
-                    parent = inquiry_reason.getparent()
-                    reference_code = ET.SubElement(parent, '{http://creditinfo.com/CB5/v5.53/CustomReport}ReferenceCode')
-                    reference_code.text = f'{generate_reference_code()}'
-                    parent.insert(parent.index(inquiry_reason) + 1, reference_code)
-            xml_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
-        return xml_result.replace(b"v5.53", b"v5.109").decode('utf-8')
-    except Exception as e:
-            logger.error(f"Error parsing XML: {e}")
-            return "ERROR"
-
-def smart_search_individual_parser_request(xml_data: str) -> str:
-    try:
-        reference_code = generate_reference_code()
-        root = ET.fromstring(xml_data.encode('utf-8'))
-        
-        query = root.find('.//cb5:SmartSearchIndividual', namespaces=root.nsmap)
-        if query is not None: 
-            params = root.find('.//smar:Parameters', namespaces=query.nsmap)
-            if params is not None:
-                parent = params.getparent()
-                reference_code_element = ET.SubElement(parent, '{http://creditinfo.com/CB5/v5.53/SmartSearch}ReferenceCode')
-                reference_code_element.text = f'{reference_code}'
-                parent.insert(parent.index(params) + 1, reference_code_element)
-        xml_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
-
-        fullName = params.find('.//smar:FullName', namespaces=params.nsmap).text if params.find('.//smar:FullName', namespaces=params.nsmap) is not None else ""
-        dateOfBirth = params.find('.//smar:DateOfBirth', namespaces=params.nsmap).text if params.find('.//smar:DateOfBirth', namespaces=params.nsmap) is not None else ""
-        idNumber = params.find('.//smar:IdNumber', namespaces=params.nsmap).text if params.find('.//smar:IdNumber', namespaces=params.nsmap) is not None else ""
-        logger.info(f"Invidual Reuqest Info : Name={fullName}, DOB={dateOfBirth}, NIK={idNumber}, ReferenceCode={reference_code}")
-
-        smart_search_data.save_daily_record(fullName, dateOfBirth, idNumber, reference_code, "REQUEST", append=True)
-        return xml_result.replace(b"v5.53", b"v5.109").decode('utf-8')
-    except Exception as e:
-            logger.error(f"Error parsing XML: {e}")
-            return "ERROR"
-
-def smart_search_individual_parser_response(xml_bytes: bytes) -> bytes:
+    @staticmethod
+    def custom_report_parser_request(xml_data: str) -> str:
         try:
-            ns = {
-                's': 'http://schemas.xmlsoap.org/soap/envelope/',
-                'a': 'http://creditinfo.com/CB5/v5.109/SmartSearch',
-                'c': 'http://creditinfo.com/CB5/Common'
-            }
+            root = ET.fromstring(xml_data.encode('utf-8'))
             
-            root = ET.fromstring(xml_bytes, parser)
-            idScoreId = root.xpath("//a:IdScoreId", namespaces=ns)
-            ns_url = idScoreId[0].nsmap.get("a")
-            pefindoId = f"{{{ns_url}}}PefindoId"
-            for i in idScoreId: i.tag = pefindoId
-
-            for idx, i in enumerate(idScoreId):
-                if (idx == 0):
-                    params = root.find('.//a:Parameters', namespaces=ns)
-                    if params is not None:
-                        parent = params.getparent()
-                        pefindoId = ET.Element('{http://creditinfo.com/CB5/v5.109/SmartSearch}PefindoId')
-                        pefindoId.text = i.text
-                        parent.insert(parent.index(params) + 1, pefindoId)
-                    i.getparent().remove(i)
-                elif (idx == 1):
-                    searchIndividualRecord = root.xpath("//a:SearchIndividualRecord", namespaces=ns)
-                    if searchIndividualRecord is not None:
-                        for idx2, i in enumerate(searchIndividualRecord):
-                            search_pefindoId = i.find(".//a:PefindoId", namespaces=searchIndividualRecord[idx2].nsmap)
-                            if search_pefindoId is not None:
-                                i.remove(search_pefindoId)
-                                params = i.find('.//a:KTP', namespaces=ns)
-                                parent = params.getparent()
-                                pefindoId = ET.Element('{http://creditinfo.com/CB5/v5.109/SmartSearch}PefindoId')
-                                pefindoId.text = search_pefindoId.text
-                                parent.insert(parent.index(params) + 1, pefindoId)
-            xml_bytes_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
-            return xml_bytes_result.replace(b"v5.109", b"v5.53")
+            query = root.find('.//cb5:GetCustomReport', namespaces=root.nsmap)
+            if query is not None: 
+                params = root.find('.//cb5:parameters', namespaces=query.nsmap)
+                if params is not None:
+                    inquiry_reason = root.find('.//cus:InquiryReason', namespaces=params.nsmap)
+                    if inquiry_reason is not None:
+                        parent = inquiry_reason.getparent()
+                        reference_code = ET.SubElement(parent, '{http://creditinfo.com/CB5/v5.53/CustomReport}ReferenceCode')
+                        reference_code.text = f'{generate_reference_code()}'
+                        parent.insert(parent.index(inquiry_reason) + 1, reference_code)
+                xml_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
+            return xml_result.replace(b"v5.53", b"v5.109").decode('utf-8')
         except Exception as e:
-            logger.error(f"Error parsing XML: {e}")
-            return "ERROR"
-
-def get_pdf_report_parser_request(xml_data: str) -> str:
-    try:
-        root = ET.fromstring(xml_data.encode('utf-8'))
-
-        params = root.find('.//cb5:parameters', namespaces=root.nsmap)
-        if params is not None: 
-            language_code = root.find('.//cus:LanguageCode', namespaces=params.nsmap)
-            if language_code is not None:
-                parent = language_code.getparent()
-                reference_code = ET.SubElement(parent, '{http://creditinfo.com/CB5/v5.53/CustomReport}ReferenceCode')
-                reference_code.text = '1234A'
-                parent.insert(parent.index(language_code) + 1, reference_code)
-
-        xml_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
-        return xml_result.replace(b"v5.53", b"v5.109").decode('utf-8')
-    except Exception as e:
-            logger.error(f"Error parsing XML: {e}")
-            return "ERROR"
-
-def get_pdf_report_parser_response(xml_bytes: bytes) -> str:
-    try: 
-        root = ET.fromstring(xml_bytes, parser)
-        ori_response = root.find(".//{http://creditinfo.com/CB5/v5.109/CustomReport}GetPdfReportResult")
-        if (ori_response) is not None:
-            return ori_response.text
-        else:
-            return ""
-    except Exception as e:
-            logger.error(f"Error parsing XML: {e}")
-            return "ERROR"
+                logger.error(f"Error parsing XML: {e}")
+                return "ERROR"
