@@ -27,7 +27,7 @@ async def get_pdf_report(raw_body: str = Body(..., media_type="text/xml"), forwa
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         XML_TEMPLATE_PATH = os.path.join(BASE_DIR, '..', '..', 'template', 'response', 'get_pdf_report.xml')
 
-        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers)
+        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers, timeout=120.0)
         logger.info(f"Upstream Response Content: {upstream_response.content.decode('utf-8')}")
         if upstream_response.status_code == 200:
             loop = asyncio.get_running_loop()

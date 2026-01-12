@@ -23,7 +23,7 @@ async def custom_report(raw_body: str = Body(..., media_type="text/xml"), forwar
             return Response(content="Gateway Error: Custom Report Request Parsing Error", status_code=500)
         logger.info(f"v5.109 Request Data: {request_data}")
 
-        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers)
+        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers, timeout=120.0)
         if upstream_response.status_code == 200:
             loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(resources.process_pool, GetCustomReportSvc.custom_report_parser_response, upstream_response.content)

@@ -143,7 +143,7 @@ class GetCustomReportSvc:
                     if inquiry_reason is not None:
                         parent = inquiry_reason.getparent()
                         reference_code = ET.SubElement(parent, '{http://creditinfo.com/CB5/v5.53/CustomReport}ReferenceCode')
-                        reference_code.text = f'{generate_reference_code()}'
+                        reference_code.text = generate_reference_code()
                         parent.insert(parent.index(inquiry_reason) + 1, reference_code)
                 xml_result = ET.tostring(root, encoding='utf-8', xml_declaration=True)
             return xml_result.replace(b"v5.53", b"v5.109").decode('utf-8')

@@ -24,7 +24,7 @@ async def smart_search_individual(raw_body: str = Body(..., media_type="text/xml
             return Response(content="Gateway Error: Smart Search Individual Request Parsing Error", status_code=500)
         logger.info(f"v5.109 Request Data: {request_data}")
 
-        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers)
+        upstream_response = await resources.http_client.post(f"{DESTINATION_DOMAIN}", content=request_data, headers=forward_headers, timeout=120.0)
         logger.info(f"Upstream Response Content: {upstream_response.content.decode('utf-8')}")
 
         if upstream_response.status_code == 200:
