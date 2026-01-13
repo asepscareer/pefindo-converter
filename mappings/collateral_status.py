@@ -1,0 +1,1 @@
+COLLATERAL_STATUS_MAPPING = frozenset()

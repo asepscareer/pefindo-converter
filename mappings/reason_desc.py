@@ -1,0 +1,1 @@
+REASON_DESC_MAPPING = frozenset({"ByCustomerRequest", "CustomerInquiry", "ThirdPartyVerification", "OperationRiskManagementNFI", "MonitoringOrVerificationOfEmployee"})

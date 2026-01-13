@@ -1,0 +1,1 @@
+COLLATERAL_INSURANCE_MAPPING = frozenset()

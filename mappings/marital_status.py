@@ -1,0 +1,1 @@
+MARITAL_STATUS_MAPPING = frozenset()

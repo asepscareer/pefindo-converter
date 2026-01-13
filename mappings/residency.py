@@ -1,0 +1,1 @@
+RESIDENCY_MAPPING = frozenset()

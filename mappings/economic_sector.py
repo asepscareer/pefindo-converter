@@ -1,0 +1,1 @@
+ECONOMIC_SECTOR_MAPPING = frozenset()

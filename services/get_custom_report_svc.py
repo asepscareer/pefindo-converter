@@ -2,7 +2,9 @@ import logging
 from lxml import etree as ET
 
 from utils import generate_reference_code
-
+from mappings.city import CITY_MAPPING
+from mappings.country_codes import COUNTRY_CODES_MAPPING
+from mappings.target.target_fields import SECTION_TARGET_FIELDS
 
 logger = logging.getLogger(__name__)
 
@@ -30,32 +32,42 @@ class GetCustomReportSvc:
             root = ET.fromstring(xml_bytes, parser)
 
             # Akses Current Relations
-            current_relations = root.find('.//a:CurrentRelations', namespaces=ns)
-            if current_relations is not None:
-            
-            # Ubah tag IdScoreId pada CurrentRelations.RelatedPartyList.RelatedParty[].IdScoreId menjadi CreditinfoId
-                related_partyList = current_relations.find('b:RelatedPartyList', namespaces=current_relations.nsmap)
-                if related_partyList is not None:
-                    for related_party in related_partyList.findall('b:RelatedParty', namespaces=current_relations.nsmap):
-                        rel_scoreId = related_party.find('b:IdScoreId', namespaces=current_relations.nsmap)
-                        if rel_scoreId is not None:
-                            rel_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
+            def current_relations_section_mapping(root, ns):
+                current_relations = root.find('.//a:CurrentRelations', namespaces=ns)
+                if current_relations is not None:
+                    # Ubah tag IdScoreId pada CurrentRelations.RelatedPartyList.RelatedParty[].IdScoreId menjadi CreditinfoId
+                        related_partyList = current_relations.find('b:RelatedPartyList', namespaces=current_relations.nsmap)
+                        if related_partyList is not None:
+                            for related_party in related_partyList.findall('b:RelatedParty', namespaces=current_relations.nsmap):
+                                rel_scoreId = related_party.find('b:IdScoreId', namespaces=current_relations.nsmap)
+                                if rel_scoreId is not None:
+                                    rel_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
 
-            # Ubah tag IdScoreId pada CurrentRelations.ContractRelationList.ContractRelation[].IdScoreId menjadi CreditinfoId
-                contract_reasonList = current_relations.find('b:ContractRelationList', namespaces=current_relations.nsmap)
-                if contract_reasonList is not None:
-                    for contract_relation in contract_reasonList.findall('b:ContractRelation', namespaces=current_relations.nsmap):
-                        contract_scoreId = contract_relation.find('b:IdScoreId', namespaces=current_relations.nsmap)
-                        if contract_scoreId is not None:
-                            contract_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
+                                related_party_ref_mapping = {
+                                    "Gender": {"Male":"Laki-laki","Female":"Perempuan"},
+                                    "IDNumberType": {"IdCard":"KTP","Passport":"Paspor","DriverLicense":"SIM"},
+                                    "SubjectStatus": {"Active":"Aktif","Inactive":"Tidak Aktif"},
+                                }
+                                related_party_target_fields = ["Gender","IDNumberType","SubjectStatus","SubjectType","TypeOfRelation"]
+                                _remapping_response_value(node=related_party, ns=current_relations.nsmap, ref_mapping=related_party_ref_mapping, target_fields=related_party_target_fields)
 
-            # Ubah tag IdScoreId pada CurrentRelations.InvolvementList.Involvement[].IdScoreId menjadi CreditinfoId
-                involvement_list = current_relations.find('b:InvolvementList', namespaces=current_relations.nsmap)
-                if involvement_list is not None:
-                    for involvement in involvement_list.findall('b:Involvement', namespaces=current_relations.nsmap):
-                        involvement_scoreId = involvement.find('b:IdScoreId', namespaces=current_relations.nsmap)
-                        if involvement_scoreId is not None:
-                            involvement_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
+                    # Ubah tag IdScoreId pada CurrentRelations.ContractRelationList.ContractRelation[].IdScoreId menjadi CreditinfoId
+                        contract_reasonList = current_relations.find('b:ContractRelationList', namespaces=current_relations.nsmap)
+                        if contract_reasonList is not None:
+                            for contract_relation in contract_reasonList.findall('b:ContractRelation', namespaces=current_relations.nsmap):
+                                contract_scoreId = contract_relation.find('b:IdScoreId', namespaces=current_relations.nsmap)
+                                if contract_scoreId is not None:
+                                    contract_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
+
+                    # Ubah tag IdScoreId pada CurrentRelations.InvolvementList.Involvement[].IdScoreId menjadi CreditinfoId
+                        involvement_list = current_relations.find('b:InvolvementList', namespaces=current_relations.nsmap)
+                        if involvement_list is not None:
+                            for involvement in involvement_list.findall('b:Involvement', namespaces=current_relations.nsmap):
+                                involvement_scoreId = involvement.find('b:IdScoreId', namespaces=current_relations.nsmap)
+                                if involvement_scoreId is not None:
+                                    involvement_scoreId.tag = f'{{{current_relations.nsmap["b"]}}}CreditinfoId'
+                        
+            current_relations_section_mapping(root, ns)
 
             # Akses Dashboard
             dashboard = root.find('.//a:Dashboard', namespaces=ns)
@@ -100,15 +112,13 @@ class GetCustomReportSvc:
                         _remapping_response_value(node=general_node, ns=individual.nsmap, ref_mapping=indv_general_ref_mapping, target_fields=indv_general_target_fields)
 
                     individual_mainaddress_ref_mapping = {
-                        "City":     {"Jakarta": "DKI Jakarta", "Other": "Lainnya", "Bandung": "Jawa Barat"},
-                        "Country":  {"ID": "Zimbabwe"}
+                        "City":    CITY_MAPPING,
+                        "Country": COUNTRY_CODES_MAPPING
                     }
-
-                    individual_mainaddress_target_fields = ['City', 'Country']
 
                     mainaddress_node = individual.find('b:MainAddress', namespaces=individual.nsmap)
                     if mainaddress_node is not None:
-                        _remapping_response_value(node=mainaddress_node, ns=individual.nsmap, ref_mapping=individual_mainaddress_ref_mapping, target_fields=individual_mainaddress_target_fields)
+                        _remapping_response_value(node=mainaddress_node, ns=individual.nsmap, ref_mapping=individual_mainaddress_ref_mapping, target_fields=SECTION_TARGET_FIELDS["Individual"]["MainAddress"])
             individual_section_mapping(root, ns)
             
             def company_section_mapping(root, ns):
@@ -191,23 +201,166 @@ class GetCustomReportSvc:
             subject_info_history_mapping(root, ns)
 
             # Akses CIP Mengubah tag ReasonsList menjadi ReasonList
+            # CIP Section Mapping
             cip = root.find('.//a:CIP', namespaces=ns)
             if cip is not None:
                 record_list = cip.find('b:RecordList', namespaces=cip.nsmap)
                 if record_list is not None:
                     for record in record_list.findall('b:Record', namespaces=cip.nsmap):
+                        record_ref_mapping = {
+                            "Grade": {"A3": "Sangat Baik", "Others": "Lainnya"},
+                            "ProbabilityOfDefault": {"4.34": "Sangat Baik", "Others": "Lainnya"},
+                        }
+                        record_target_fields = ['Date', 'Grade', 'ProbabilityOfDefault', 'Score', 'Trend']
+
+                        _remapping_response_value(node=record, ns=cip.nsmap, ref_mapping=record_ref_mapping, target_fields=record_target_fields)
+
                         reasons_list = record.find('b:ReasonsList', namespaces=cip.nsmap)
                         if reasons_list is not None:
                             reasons_list.tag = f'{{{cip.nsmap["b"]}}}ReasonList'
 
-                    # CIP.RecordList.Record.Date
-                    # CIP.RecordList.Record.Grade
-                    # CIP.RecordList.Record.ProbabilityOfDefault
-                    # CIP.RecordList.Record.ReasonList
-                    # CIP.RecordList.Record.ReasonList.Reason.Code
-                    # CIP.RecordList.Record.ReasonList.Reason.Description
-                    # CIP.RecordList.Record.Score
-                    # CIP.RecordList.Record.Trend
+                            for reason in reasons_list.findall('b:Reason', namespaces=cip.nsmap):
+                                reason_ref_mapping = {
+                                    "Code": {"NQS1": "Asep Saputra", "02": "Lainnya"},
+                                    "Description": {"Dummy scoring": "Ini Hanya Dummy scoring", "Others": "Lainnya"},
+                                }
+
+                                reason_target_fields = ['Code', 'Description']
+                                _remapping_response_value(node=reason, ns=cip.nsmap, ref_mapping=reason_ref_mapping, target_fields=reason_target_fields)
+
+            # Contracts Section Mapping
+            def contracts_section_mapping(root, ns):
+                contracts = root.find('.//a:Contracts', namespaces=ns)
+                if contracts is not None:
+                    contract_list = contracts.find('b:ContractList', namespaces=contracts.nsmap)
+                    if contract_list is not None:
+                        for contract in contract_list.findall('b:Contract', namespaces=contracts.nsmap):
+
+                            # CollateralList
+                            collateralList = contract.find('b:CollateralList', namespaces=contracts.nsmap)
+                            if collateralList is not None:
+                                for collateral in collateralList.findall('b:Collateral', namespaces=contracts.nsmap):
+                                    collateral_ref_mapping = {
+                                        "AppraisalValue": {"1000000000": "1500000000"},
+                                    }
+                                    collateral_target_fields = ["AppraisalValue","BankValuationDate","BankValue","Branch","CollateralAcceptanceDate","CollateralAppraisalAuthority","CollateralCode","CollateralDescription","CollateralOwnerName",
+                                                                "CollateralRating","CollateralStatus","CollateralType","CollateralValue","HasMultipleCollaterals","Insurance","IsShared","MainAddressAddressLine","MainAddressCity",
+                                                                "MainAddressStreet","ProofOfOwnership","RatingAuthority","SecurityAssignmentType","SharedPortion","ValuationDate"]
+                                    _remapping_response_value(node=collateral, ns=contracts.nsmap, ref_mapping=collateral_ref_mapping, target_fields=collateral_target_fields)
+
+                            # RelatedSubjectsList
+                            relatedSubjectsList = contract.find('b:RelatedSubjectsList', namespaces=contracts.nsmap)
+                            if relatedSubjectsList is not None:
+                                for related_subject in relatedSubjectsList.findall('b:RelatedSubject', namespaces=contracts.nsmap):
+                                    related_subject_ref_mapping = {
+                                        "TaxNumber": {"0": "1", "Other": "Lainnya"},
+                                    }
+                                    related_subject_target_fields = ["ExpectedEndDate","GuarancyDescription","GuaranteeAmount","JointAccountSequence","Name","NationalID","PassportNumber","RealEndDate",
+                                                                     "RegistrationNumber","RelationshipType","RoleOfClient","StartDate","SubjectType","TaxNumber"]
+                                    _remapping_response_value(node=related_subject, ns=contracts.nsmap, ref_mapping=related_subject_ref_mapping, target_fields=related_subject_target_fields)
+
+                            # PaymentCalendarList
+                            paymentCalendarList = contract.find('b:PaymentCalendarList', namespaces=contracts.nsmap)
+                            if paymentCalendarList is not None:
+                                for calendar_item in paymentCalendarList.findall('b:CalendarItem', namespaces=contracts.nsmap):
+                                    calendar_item_ref_mapping = {
+                                        "DelinquencyStatus": {"Current": "Lancar", "Others": "Lainnya"},
+                                        "NegativeStatusOfContract": {"NoNegativeStatus": "Tidak ada status negatif", "Others": "Lainnya"},
+                                    }
+                                    calendar_item_target_fields = ["Date","DelinquencyStatus","InterestRate","NegativeStatusOfContract","OutstandingAmount","PastDueAmount","PastDueDays"]
+                                    _remapping_response_value(node=calendar_item, ns=contracts.nsmap, ref_mapping=calendar_item_ref_mapping, target_fields=calendar_item_target_fields)
+
+                            """
+                            Filed Ini dilakukan nanti
+                            Disputes, InitialTotalAmount, OutstandingAmount, PastDueAmount, PastDueInterest,
+                            Penalty, PrincipalArrears, PrincipalBalance, ProjectValue,
+                            TotalAmount, TotalFacilityAmount, TotalTakenAmount
+                            """
+
+                            contract_ref_mapping = {
+                                "Creditor": {"PT Woka Internasional": "Hana Bank"},
+                                "CreditorType": {"Multifinance": "Bank"},
+                                "NegativeStatusOfContract": {"NoNegativeStatus": "Tidak ada status negatif", "Others": "Lainnya"}
+                            }
+
+                            contract_target_fields = [
+                                "BankBeneficiary","Branch", "ConditionDate", "ContractCode","ContractCurrency","ContractStatus",
+                                "ContractSubtype","ContractType", "CreditCharacteristics","CreditClassification","CreditUsageInLast30Days","Creditor","CreditorType","DefaultDate","DefaultReason","DefaultReasonDescription",
+                                "DelinquencyDate","Description","DisbursementDate","EconomicSector","GovernmentProgram","GuarantyDeposit","InitialAgreementDate", "InitialAgreementNumber",
+                                "InitialInterestRate","InitialInterestRateType","InitialRestructuringDate","InitialTotalAmount","InterestArrears","InterestArrearsFrequency","LastAgreementDate","LastAgreementNumber",
+                                "LastDelinquency90PlusDays","LastInterestRate","LastInterestRateType","LastUpdate","MaturityDate","NameOfInsured","NegativeStatusOfContract","OrientationOfUse",
+                                "PastDueDays","PhaseOfContract","PrincipalArrearsFrequency","ProjectLocation", "ProlongationCounter","PurposeOfFinancing","RealEndDate","RestructuredCount",
+                                "RestructuringDate","RestructuringReason","RoleOfClient","StartDate","SyndicatedLoan", "WorstPastDueAmount","WorstPastDueDays"
+                            ]
+                            _remapping_response_value(node=contract, ns=contracts.nsmap, ref_mapping=contract_ref_mapping, target_fields=contract_target_fields)
+            contracts_section_mapping(root, ns)
+
+            # Contract Overview Section Mapping
+            def contract_overview_section_mapping(root, ns):
+                contract_overview = root.find('.//a:ContractOverview', namespaces=ns)
+                if contract_overview is not None:
+                    contract_list = contract_overview.find('b:ContractList', namespaces=contract_overview.nsmap)
+                    if contract_list is not None:
+                        for contract in contract_list.findall('b:Contract', namespaces=contract_overview.nsmap):
+                            contract_ref_mapping = {
+                                "ContractStatus": {"Settled": "Berhasil"},
+                                "Sector": {"Multifinance": "Bank"},
+                            }
+
+                            contract_target_fields = [ "ContractStatus", "OutstandingAmount", "PastDueAmount", "PastDueDays",
+                                                      "PhaseOfContract", "RoleOfClient", "Sector", "StartDate", "TotalAmount", "TypeOfContract"
+                            ]
+                            _remapping_response_value(node=contract, ns=contract_overview.nsmap, ref_mapping=contract_ref_mapping, target_fields=contract_target_fields)
+            contract_overview_section_mapping(root, ns)
+
+            # Contract Summary Section Mapping
+            def contract_summary_section_mapping(root, ns):
+                contract_summary = root.find('.//a:ContractSummary', namespaces=ns)
+                if contract_summary is not None:
+                    paymentCalendarList = contract_summary.find('b:PaymentCalendarList', namespaces=contract_summary.nsmap)
+                    if paymentCalendarList is not None:
+                        for payment_calendar in paymentCalendarList.findall('b:PaymentCalendar', namespaces=contract_summary.nsmap):
+                            payment_calendar_ref_mapping = {
+                                "NegativeStatusOfContract": {"NoNegativeStatus": "Tidak ada status negatif", "Others": "Lainnya"},
+                            }
+                            payment_calendar_target_fields = ["ContractsSubmitted", "Date", "NegativeStatusOfContract", "OutstandingAmount", "PastDueAmount", "PastDueDays"]
+                            _remapping_response_value(node=payment_calendar, ns=contract_summary.nsmap, ref_mapping=payment_calendar_ref_mapping, target_fields=payment_calendar_target_fields)
+            contract_summary_section_mapping(root, ns)
+
+            # CIQ Section Mapping
+            def ciq_section_mapping(root, ns):
+                ciq = root.find('.//a:CIQ', namespaces=ns)
+                if ciq is not None:
+                    pass
+                    # CIQ.Detail.NumberOfCancelledClosedContracts
+                    # CIQ.Detail.NumberOfCancelledClosedContracts
+                    # CIQ.Detail.NumberOfSubscribersMadeInquiriesLast14Days
+                    # CIQ.Detail.NumberOfSubscribersMadeInquiriesLast2Days
+                    # CIQ.Summary.DateOfLastFraudRegistrationPrimarySubject
+                    # CIQ.Summary.DateOfLastFraudRegistrationThirdParty
+                    # CIQ.Summary.NumberOfFraudAlertsPrimarySubject
+                    # CIQ.Summary.NumberOfFraudAlertsThirdParty
+            ciq_section_mapping(root, ns)
+
+
+            # Securities Section Mapping
+            def securities_section_mapping(root, ns):
+                securities = root.find('.//a:Securities', namespaces=ns)
+                if securities is not None:
+                    security_list = securities.find('b:SecurityList', namespaces=securities.nsmap)
+                    if security_list is not None:
+                        for security in security_list.findall('b:Security', namespaces=securities.nsmap):
+                            security_ref_mapping = {
+                                "ContractStatus": {"Settled": "Berhasil"},
+                                "SecurityType": {"LandAndBuilding": "Tanah dan Bangunan", "Vehicle": "Kendaraan", "Other": "Lainnya"},
+                            }
+                            security_target_fields = ["AcquisitionAmount","AcquisitionDate","Branch","ConditionDate","ContractCode",
+                                                      "ContractStatus","Creditor","CurrencyOfContract","DefaultDate","DefaultReason","DefaultReasonDescription",
+                                                    "DelinquencyDate","Description","InitialTotalAmount","InterestRate","IssueDate","IssuerName","LastUpdate",
+                                                    "MarketListed","MarketValue","MaturityDate","NegativeStatus", "OutstandingAmount","PastDueDays","PreviousContractCode",
+                                                    "PrincipalArrears","PurposeOfOwnership","Rating","RealEndDate","SecurityType","SovereignRate","TypeofInterestRate"]
+                            _remapping_response_value(node=security, ns=securities.nsmap, ref_mapping=security_ref_mapping, target_fields=security_target_fields)
+            securities_section_mapping(root, ns)
 
             # Menambahkan Data pada tag a:Collaterals
             collaterals = dashboard.find('.//a:Collaterals', namespaces=dashboard.nsmap)
@@ -224,6 +377,7 @@ class GetCustomReportSvc:
                 parent.insert(parent.index(ciq) + 1, collaterals)
             
             # Menambahkan Type pada Disputes
+            # Disputes Section Mapping
             disputes = root.find('.//a:Disputes', namespaces=ns)
             if disputes is not None:
                 dispute_list = disputes.find('b:DisputeList', namespaces=disputes.nsmap)
@@ -236,6 +390,33 @@ class GetCustomReportSvc:
                         typE = ET.SubElement(i, f'{{http://creditinfo.com/CB5/v5.109/CustomReport/Disputes}}Type')
                         typE.text = ''
 
+            # Inquiries Section Mapping
+            def inquiries_section_mapping(root, ns):
+                # Inquiries.Summary.NumberOfInquiriesLast12Months
+                # Inquiries.Summary.NumberOfInquiriesLast1Month
+                # Inquiries.Summary.NumberOfInquiriesLast24Months
+                # Inquiries.Summary.NumberOfInquiriesLast3Months
+                # Inquiries.Summary.NumberOfInquiriesLast6Months
+                # Inquiries.InquiryList.Inquiry.DateOfInquiry
+                # Inquiries.InquiryList.Inquiry.Product
+                # Inquiries.InquiryList.Inquiry.Reason
+                # Inquiries.InquiryList.Inquiry.Sector
+                # Inquiries.InquiryList.Inquiry.SubscriberInfo
+                inquiries = root.find('.//a:Inquiries', namespaces=ns)
+                if inquiries is not None:
+                    inquiry_list = inquiries.find('b:InquiryList', namespaces=inquiries.nsmap)
+                    if inquiry_list is not None:
+                        for inquiry in inquiry_list.findall('b:Inquiry', namespaces=inquiries.nsmap):
+                            inquiry_ref_mapping = {
+                                "Sector": {"NotSpecified": "Bank", "Others": "Liannya"},
+                                "SubscriberInfo": {"PT Creditinfo Indonesia": "Hana Bank", "Others": "Lainnya"},
+                            }
+
+                            inquiry_target_fields = ["DateOfInquiry", "Product", "Reason", "Sector", "SubscriberInfo", "InquiryType"]
+                            _remapping_response_value(node=inquiry, ns=inquiries.nsmap, ref_mapping=inquiry_ref_mapping, target_fields=inquiry_target_fields)
+            inquiries_section_mapping(root, ns)
+
+            # ReportInfo Version Update
             reportInfo = root.find('.//a:ReportInfo', namespaces=ns)
             if reportInfo is not None:
                 report_version = reportInfo.find('b:Version', namespaces=reportInfo.nsmap)
