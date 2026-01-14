@@ -1,1 +1,0 @@
-RATING_INSTITUTION_MAPPING = frozenset()

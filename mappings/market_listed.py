@@ -1,1 +1,0 @@
-MARKET_LISTED_MAPPING = frozenset()

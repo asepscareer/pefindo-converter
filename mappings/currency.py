@@ -1,1 +1,0 @@
-CURRENCY_MAPPING = frozenset({"ECV", "TPE", "V99"})

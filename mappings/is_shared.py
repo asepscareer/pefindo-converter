@@ -1,1 +1,0 @@
-IS_SHARED_MAPPING = frozenset()

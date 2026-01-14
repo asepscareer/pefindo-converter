@@ -1,1 +1,0 @@
-COLLATERAL_SECURITY_AT = frozenset()

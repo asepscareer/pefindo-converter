@@ -1,1 +1,0 @@
-LEGAL_FORM_MAPPING = frozenset({"RegionalLimitedCompany", "RegionalPublicCompany"})

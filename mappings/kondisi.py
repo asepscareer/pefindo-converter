@@ -1,1 +1,0 @@
-KONDISI_MAPPING = frozenset({"RiskParticipationTransaction", "TransferredWithBillingManagement"})

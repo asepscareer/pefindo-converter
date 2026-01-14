@@ -1,1 +1,0 @@
-PELAPOR_MAPPING = frozenset()
