@@ -158,7 +158,7 @@ REFERENCE_FIELDS = {
         "Trust": "",
         "CreditInsurance": "",
     },
-    "CONTRACT_SUBTYPE": {
+    "ContractSubtype": {
         "MusyarakahMutanaqisah": "",
         "MultiserviceEducation": "",
         "MultiserviceReligious": "",
